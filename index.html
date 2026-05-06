@@ -84,6 +84,10 @@ canvas {
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
 <script>
+let model, webcam, labelContainer, maxPredictions;
+let lastTriggerTime = 0;
+const cooldown = 1200; // 1.2 second cooldown
+
 async function init() {
     try {
         document.getElementById("loading").innerText = "Loading model...";
@@ -103,6 +107,8 @@ async function init() {
         document.getElementById("webcam-container").appendChild(webcam.canvas);
 
         labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
+
         for (let i = 0; i < maxPredictions; i++) {
             labelContainer.appendChild(document.createElement("div"));
         }
@@ -110,16 +116,11 @@ async function init() {
         document.getElementById("loading").style.display = "none";
 
     } catch (error) {
-        console.error(error);
+        console.error("ERROR:", error);
         document.getElementById("loading").innerText =
             "Error loading model. Check console.";
     }
 }
-
-let model, webcam, labelContainer, maxPredictions;
-let lastTriggerTime = 0;
-const cooldown = 1000; // 1 second cooldown
-
 
 async function loop() {
     webcam.update();
@@ -138,7 +139,6 @@ async function predict() {
         }
     }
 
-    // Display predictions
     predictions.forEach((p, i) => {
         labelContainer.childNodes[i].innerHTML =
             p.className + ": " + p.probability.toFixed(2);
@@ -147,38 +147,82 @@ async function predict() {
     const now = Date.now();
 
     if (highest.probability > 0.90 && now - lastTriggerTime > cooldown) {
-        triggerEffect(highest.className);
+        if (highest.className === "Explosion") {
+            triggerExplosion();
+        } else if (highest.className === "Gravity pull") {
+            triggerGravity();
+        }
+
         lastTriggerTime = now;
     }
 }
 
-function triggerEffect(gesture) {
-    const effectsContainer = document.getElementById("effects");
+function triggerExplosion() {
+    const container = document.getElementById("effects");
 
-    const effect = document.createElement("div");
-    effect.classList.add("effect");
+    for (let i = 0; i < 20; i++) {
+        const particle = document.createElement("div");
+        particle.classList.add("effect");
 
-    effect.style.left = Math.random() * window.innerWidth + "px";
-    effect.style.top = Math.random() * window.innerHeight + "px";
+        const x = window.innerWidth / 2;
+        const y = window.innerHeight / 2;
 
-    // Customize effects per gesture name
-    switch (gesture) {
-        case "Open":
-            effect.style.background = "cyan";
-            break;
-        case "Fist":
-            effect.style.background = "red";
-            break;
-        case "Peace":
-            effect.style.background = "lime";
-            break;
-        default:
-            effect.style.background = "yellow";
+        particle.style.left = x + "px";
+        particle.style.top = y + "px";
+        particle.style.background = "orange";
+
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = 200 + Math.random() * 200;
+
+        particle.animate([
+            { transform: "translate(0,0)", opacity: 1 },
+            {
+                transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`,
+                opacity: 0
+            }
+        ], {
+            duration: 800,
+            easing: "ease-out"
+        });
+
+        container.appendChild(particle);
+
+        setTimeout(() => particle.remove(), 800);
     }
+}
 
-    effectsContainer.appendChild(effect);
+function triggerGravity() {
+    const container = document.getElementById("effects");
 
-    setTimeout(() => effect.remove(), 800);
+    for (let i = 0; i < 25; i++) {
+        const particle = document.createElement("div");
+        particle.classList.add("effect");
+
+        const startX = Math.random() * window.innerWidth;
+        const startY = Math.random() * window.innerHeight;
+
+        particle.style.left = startX + "px";
+        particle.style.top = startY + "px";
+        particle.style.background = "cyan";
+
+        const centerX = window.innerWidth / 2 - startX;
+        const centerY = window.innerHeight / 2 - startY;
+
+        particle.animate([
+            { transform: "translate(0,0)", opacity: 1 },
+            {
+                transform: `translate(${centerX}px, ${centerY}px)`,
+                opacity: 0
+            }
+        ], {
+            duration: 1000,
+            easing: "ease-in"
+        });
+
+        container.appendChild(particle);
+
+        setTimeout(() => particle.remove(), 1000);
+    }
 }
 </script>
 
