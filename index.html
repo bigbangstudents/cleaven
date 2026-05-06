@@ -120,37 +120,6 @@ let model, webcam, labelContainer, maxPredictions;
 let lastTriggerTime = 0;
 const cooldown = 1000; // 1 second cooldown
 
-async function init() {
-    try {
-        document.getElementById("loading").style.display = "flex";
-
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
-
-        const flip = window.innerWidth < 768;
-        webcam = new tmImage.Webcam(300, 300, flip);
-
-        await webcam.setup({ facingMode: "user" });
-        await webcam.play();
-        window.requestAnimationFrame(loop);
-
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-
-        labelContainer = document.getElementById("label-container");
-        for (let i = 0; i < maxPredictions; i++) {
-            labelContainer.appendChild(document.createElement("div"));
-        }
-
-        document.getElementById("loading").style.display = "none";
-
-    } catch (error) {
-        alert("Camera or Model failed to load.\nCheck permissions and model URL.");
-        console.error(error);
-    }
-}
 
 async function loop() {
     webcam.update();
