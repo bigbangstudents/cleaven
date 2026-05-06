@@ -84,7 +84,37 @@ canvas {
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
 <script>
-const URL = "https://teachablemachine.withgoogle.com/models/ZEQHU-8Ai/";
+async function init() {
+    try {
+        document.getElementById("loading").innerText = "Loading model...";
+
+        model = await tmImage.load("model.json", "metadata.json");
+        maxPredictions = model.getTotalClasses();
+
+        document.getElementById("loading").innerText = "Starting camera...";
+
+        const flip = window.innerWidth < 768;
+        webcam = new tmImage.Webcam(300, 300, flip);
+
+        await webcam.setup({ facingMode: "user" });
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+
+        document.getElementById("loading").style.display = "none";
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById("loading").innerText =
+            "Error loading model. Check console.";
+    }
+}
 
 let model, webcam, labelContainer, maxPredictions;
 let lastTriggerTime = 0;
